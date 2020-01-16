@@ -95,7 +95,7 @@ export class FfmpegComponent implements OnInit {
       // console.log(videoFile)
       // console.log(this.videoData)
       await this.worker.write(name, videoFile);
-      await this.worker.keyFrames(name, 'out_%d.jpeg', '-f image2 -vf fps=1,showinfo -an');
+      await this.worker.run('-i ' + name + ' -f image2 -vf fps=1,showinfo -an out_%d.jpeg');
       const filemask = /out_\d*\.jpeg/;
       const { data } = await this.worker.ls('.');
       console.log(data)

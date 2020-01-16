@@ -32,7 +32,7 @@
               "src/styles.scss"
             ],
             "scripts": [
-              "./node_modules/ffmpeg/dist/ffmpeg.min.js"
+              "./node_modules/@ffmpeg/ffmpeg/dist/ffmpeg.min.js"
             ],
             "webWorkerTsConfig": "tsconfig.worker.json"
           },
@@ -101,7 +101,7 @@
               "src/styles.scss"
             ],
             "scripts": [
-              "./node_modules/ffmpeg/dist/ffmpeg.min.js"
+              "./node_modules/@ffmpeg/ffmpeg/dist/ffmpeg.min.js"
             ]
           }
         },
