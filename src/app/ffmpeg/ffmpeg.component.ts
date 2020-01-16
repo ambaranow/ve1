@@ -76,37 +76,35 @@ export class FfmpegComponent implements OnInit {
       // Create a new
       this.worker = new Worker('./ffmpeg.worker', { type: 'module' });
       this.worker.onmessage = ({data}) => {
-        // console.log('>>> this.worker.onmessage');
-        // console.log(data)
-        // console.log(`page got message: ${data}`);
-        const message = data;
-        if (message.type === 'ready') {
-          this.isWorkerLoaded = true;
-          this.workerReady.next(null);
-          // this.worker.postMessage({
-          //   type: 'command',
-          //   arguments: ['-help']
-          // });
-        } else if (message.type === 'stdout') {
-          this.outputMessage += message.data + '\n';
-        } else if (message.type === 'start') {
-          this.outputMessage = 'Worker has received command\n';
-        } else if (message.type === 'done') {
-          this.stopRunning();
-          this.keyFrames = [];
-          const buffers = message.data;
-          if (buffers.length) {
-            // this.outputMessage.className = 'closed';
-          }
-          buffers.forEach(file => {
-            // console.log('file')
-            // console.log(file);
-            const blob = new Blob([file.data], { type: 'image/jpeg' } );
-            const imageUrl = this.sanitizer.bypassSecurityTrustUrl(URL.createObjectURL( blob ));
-            this.keyFrames.push(imageUrl);
-            // filesElement.appendChild(getDownloadLink(file.data, file.name));
-          });
-        }
+        console.log(`page got message: ${data}`);
+        // const message = data;
+        // if (message.type === 'ready') {
+        //   this.isWorkerLoaded = true;
+        //   this.workerReady.next(null);
+        //   // this.worker.postMessage({
+        //   //   type: 'command',
+        //   //   arguments: ['-help']
+        //   // });
+        // } else if (message.type === 'stdout') {
+        //   this.outputMessage += message.data + '\n';
+        // } else if (message.type === 'start') {
+        //   this.outputMessage = 'Worker has received command\n';
+        // } else if (message.type === 'done') {
+        //   this.stopRunning();
+        //   this.keyFrames = [];
+        //   const buffers = message.data;
+        //   if (buffers.length) {
+        //     // this.outputMessage.className = 'closed';
+        //   }
+        //   buffers.forEach(file => {
+        //     // console.log('file')
+        //     // console.log(file);
+        //     const blob = new Blob([file.data], { type: 'image/jpeg' } );
+        //     const imageUrl = this.sanitizer.bypassSecurityTrustUrl(URL.createObjectURL( blob ));
+        //     this.keyFrames.push(imageUrl);
+        //     // filesElement.appendChild(getDownloadLink(file.data, file.name));
+        //   });
+        // }
 
       };
       this.worker.postMessage('hello');
@@ -127,36 +125,9 @@ export class FfmpegComponent implements OnInit {
     return u8arr;
   }
 
-  // retrieveSampleVideo() {
-  //   const oReq = new XMLHttpRequest();
-  //   oReq.open('GET', '/assets/bigbuckbunny.webm', true);
-  //   oReq.responseType = 'arraybuffer';
-  //   oReq.onload = (oEvent) => {
-  //     const arrayBuffer = oReq.response;
-  //     if (arrayBuffer) {
-  //       console.log('+++++ retrieveSampleVideo')
-  //       console.log(arrayBuffer)
-  //       console.log(new Uint8Array(arrayBuffer))
-  //       console.log('----- retrieveSampleVideo')
-  //       // sampleVideoData = new Uint8Array(arrayBuffer);
-  //     }
-  //   };
-  //   oReq.send(null);
-  // }
-
   getFileName(file: ReadFile) {
-    // const reader = new FileReader();
-    // console.log(this.dataURItoBlob(file.content))
-    // console.log(reader.readAsBinaryString(file.underlyingFile.));
-    // console.log(file.content)
     const extensionRegExp = /\.([0-9a-z]{1,5})$/i;
     const extension = file.name.match(extensionRegExp)[1];
-    // file.name = 'video.' + extension.toLowerCase();
-    // const fileReader = new FileReader();
-    // const newFile = new File([this.dataURItoBlob(file.content)], 'video.' + extension.toLowerCase(), {type: file.underlyingFile.type});
-    // console.log(newFile)
-    // // const newFile = file;
-    // console.log('========')
     return 'video.' + extension.toLowerCase();
   }
 
