@@ -3,6 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import { ReadFile } from 'ngx-file-helpers';
 import { DomSanitizer } from '@angular/platform-browser';
 
+
 @Component({
   selector: 'app-ffmpeg',
   templateUrl: './ffmpeg.component.html',
@@ -15,7 +16,7 @@ export class FfmpegComponent implements OnInit {
   outputMessage = '';
   running = false;
   videoData;
-
+  mess = '';
   keyFrames = [];
 
   workerReady: BehaviorSubject<any> = new BehaviorSubject<any>(null);
@@ -53,65 +54,77 @@ export class FfmpegComponent implements OnInit {
     return args;
   }
 
-  runCommand(text: string) {
-    if (this.isReady()) {
-      this.startRunning();
-      const args = this.parseArguments(text);
-      // console.log(args);
-      this.worker.postMessage({
-        type: 'command',
-        arguments: args,
-        files: [
-          {
-            name: this.getFileName(this.videoData),
-            data: this.dataURLtoU8arr(this.videoData.content)
-          }
-        ]
-      });
-    }
-  }
+  // runCommand(text: string) {
+  //   if (this.isReady()) {
+  //     this.startRunning();
+  //     const args = this.parseArguments(text);
+  //     // console.log(args);
+  //     this.worker.postMessage({
+  //       type: 'command',
+  //       arguments: args,
+  //       files: [
+  //         {
+  //           name: this.getFileName(this.videoData),
+  //           data: this.dataURLtoU8arr(this.videoData.content)
+  //         }
+  //       ]
+  //     });
+  //   }
+  // }
 
   initWorker() {
-    if (typeof Worker !== 'undefined') {
-      // Create a new
-      this.worker = new Worker('./ffmpeg.worker', { type: 'module' });
-      this.worker.onmessage = ({data}) => {
-        console.log(`page got message: ${data}`);
-        // const message = data;
-        // if (message.type === 'ready') {
-        //   this.isWorkerLoaded = true;
-        //   this.workerReady.next(null);
-        //   // this.worker.postMessage({
-        //   //   type: 'command',
-        //   //   arguments: ['-help']
-        //   // });
-        // } else if (message.type === 'stdout') {
-        //   this.outputMessage += message.data + '\n';
-        // } else if (message.type === 'start') {
-        //   this.outputMessage = 'Worker has received command\n';
-        // } else if (message.type === 'done') {
-        //   this.stopRunning();
-        //   this.keyFrames = [];
-        //   const buffers = message.data;
-        //   if (buffers.length) {
-        //     // this.outputMessage.className = 'closed';
-        //   }
-        //   buffers.forEach(file => {
-        //     // console.log('file')
-        //     // console.log(file);
-        //     const blob = new Blob([file.data], { type: 'image/jpeg' } );
-        //     const imageUrl = this.sanitizer.bypassSecurityTrustUrl(URL.createObjectURL( blob ));
-        //     this.keyFrames.push(imageUrl);
-        //     // filesElement.appendChild(getDownloadLink(file.data, file.name));
-        //   });
+    const { createWorker } = window['FFmpeg'];
+    // console.log(createWorker);
+    this.mess = '';
+    this.worker = createWorker({
+      corePath: '/assets/ffmpeg-core.js',
+      logger: (res) => {
+        console.log(res)
+        // if (res.message && !res.type || res.type !== 'stderr') {
+        //   console.log(res.message);
         // }
+      },
+      progress: p => console.log(p),
+    });    // console.log(worker);
+    const cli = async () => {
+      let { name } = this.videoData;
+      name = name.replace(/\s/g, '+');
+      await this.worker.load();
+      const videoFile = new File([this.dataURLtoU8arr(this.videoData.content)], name, { type: this.videoData.type });
 
-      };
-      this.worker.postMessage('hello');
-    } else {
-      // Web Workers are not supported in this environment.
-      // You should add a fallback so that your program still executes correctly.
-    }
+      // console.log(videoFile)
+      // console.log(this.videoData)
+      await this.worker.write(name, videoFile);
+      await this.worker.keyFrames(name, 'out_%d.jpeg', '-f image2 -vf fps=1,showinfo -an');
+      const filemask = /out_\d*\.jpeg/;
+      const { data } = await this.worker.ls('.');
+      console.log(data)
+      this.keyFrames = [];
+      for (const path of data) {
+        if (filemask.test(path)) {
+          const imageFile = await this.worker.read(path);
+          // console.log(file)
+          const type = 'image/jpeg';
+          // this.keyFrames.push({
+          //   file: new File([file.data], path, { type }),
+          //   src: this.sanitizer.bypassSecurityTrustUrl(URL.createObjectURL(new Blob([file.data], { type })))
+          // });
+          this.keyFrames.push(
+            this.sanitizer.bypassSecurityTrustUrl(
+              URL.createObjectURL(
+                new Blob([imageFile.data], { type })
+              )
+            )
+          );
+        }
+      }
+
+      // this.isWorkerLoaded = true;
+      // this.workerReady.next(null);
+      // await this.worker.cli('-help');
+      // await this.worker.terminate('');
+    };
+    cli();
   }
 
   dataURLtoU8arr(dataurl) {
@@ -138,12 +151,14 @@ export class FfmpegComponent implements OnInit {
       if (!this.worker) {
         this.initWorker();
       }
-      this.workerReady.subscribe(() => {
-
-        // this.runCommand('-version')
-        // this.runCommand('-buildconf');
-        this.runCommand('-i ' + this.getFileName(this.videoData) + ' -f image2 -vf fps=fps=1,showinfo -an out%d.jpeg');
-      });
+      // this.workerReady.subscribe(() => {
+      //   (async () => {
+      //     await this.worker.cli('-help');
+      //   })();
+      //   // this.runCommand('-version')
+      //   // this.runCommand('-buildconf');
+      //   this.runCommand('-i ' + this.getFileName(this.videoData) + ' -f image2 -vf fps=fps=1,showinfo -an out%d.jpeg');
+      // });
     });
   }
 
