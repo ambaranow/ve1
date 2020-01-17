@@ -73,6 +73,7 @@ export class FfmpegComponent implements OnInit {
   // }
 
   initWorker() {
+    console.log(window)
     const { createWorker } = window['FFmpeg'];
     // console.log(createWorker);
     this.mess = '';
@@ -80,9 +81,10 @@ export class FfmpegComponent implements OnInit {
       corePath: '/assets/ffmpeg-core.js',
       logger: (res) => {
         console.log(res)
-        // if (res.message && !res.type || res.type !== 'stderr') {
-        //   console.log(res.message);
-        // }
+        if (res.message && !res.type || res.type !== 'stderr') {
+          // console.log(res.message);
+          this.mess += res.message + '\n';
+        }
       },
       progress: p => console.log(p),
     });    // console.log(worker);
@@ -95,10 +97,13 @@ export class FfmpegComponent implements OnInit {
       // console.log(videoFile)
       // console.log(this.videoData)
       await this.worker.write(name, videoFile);
+      console.log(this.worker)
+      // await this.worker.run('-filters')
+      // await this.worker.run('-i ' + name + ' colorchannelmixer=.3:.4:.3:0:.3:.4:.3:0:.3:.4:.3 output.mp4');
       await this.worker.run('-i ' + name + ' -f image2 -vf fps=1,showinfo -an out_%d.jpeg');
       const filemask = /out_\d*\.jpeg/;
       const { data } = await this.worker.ls('.');
-      console.log(data)
+      // console.log(data)
       this.keyFrames = [];
       for (const path of data) {
         if (filemask.test(path)) {
